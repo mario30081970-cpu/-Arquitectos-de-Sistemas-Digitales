@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1f3a">
+<meta name="description" content="Simulador de análisis sociotécnico para entender cómo tecnología y sociedad se construyen juntas.">
+<title>Arquitectos de Sistemas Digitales</title>
+<style>
+  :root{
+    --azul-950:#07162b;
+    --azul-900:#0b1f3a;
+    --azul-700:#123a6b;
+    --azul-600:#1a4d8f;
+    --azul-500:#2563a8;
+    --azul-100:#e3ecf7;
+    --acento:#f2a71b;
+    --ok:#1f9d63;
+    --warn:#e0a020;
+    --bad:#d0453b;
+    --g900:#1f2937;
+    --g700:#334155;
+    --g600:#5b6b80;
+    --g400:#94a3b8;
+    --g200:#e6edf5;
+    --g100:#eef2f7;
+    --radio:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:#e9eef5;color:var(--g900);line-height:1.5;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  .app{
+    max-width:540px;margin:0 auto;min-height:100vh;background:#f7f9fc;
+    box-shadow:0 0 40px rgba(11,31,58,.10);display:flex;flex-direction:column;
+  }
+
+  /* ---------- TOPBAR ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:60;
+    background:linear-gradient(135deg,#07162b 0%,#123a6b 100%);
+    color:#fff;padding:12px 16px;
+    padding-top:calc(12px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:11px;
+    box-shadow:0 3px 14px rgba(7,22,43,.28);
+  }
+  .logo{
+    width:36px;height:36px;flex:0 0 36px;border-radius:11px;
+    background:linear-gradient(135deg,#f2a71b,#e07a1f);
+    display:flex;align-items:center;justify-content:center;
+    font-size:19px;font-weight:900;color:#07162b;
+  }
+  .topbar h1{font-size:14.5px;margin:0;font-weight:800;letter-spacing:.2px;line-height:1.2}
+  .topbar p{margin:1px 0 0;font-size:10.5px;color:#9dc0e8;letter-spacing:.4px;text-transform:uppercase;font-weight:600}
+
+  /* ---------- PANTALLAS ---------- */
+  .pantalla{display:none;padding-bottom:36px}
+  .pantalla.activa{display:block;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---------- BOTONES ---------- */
+  .btn{
+    display:block;width:calc(100% - 32px);margin:10px 16px 16px;
+    padding:17px 16px;border:none;border-radius:14px;
+    font-size:16.5px;font-weight:800;font-family:inherit;cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .2s;
+    letter-spacing:.1px;
+  }
+  .btn:active{transform:scale(.975)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-primario{
+    background:linear-gradient(135deg,#1a4d8f,#0b1f3a);color:#fff;
+    box-shadow:0 6px 18px rgba(11,31,58,.30);
+  }
+  .btn-secundario{
+    background:#fff;color:var(--azul-700);border:2px solid var(--g200);
+    box-shadow:0 2px 8px rgba(11,31,58,.06);
+  }
+  .btn-volver{
+    background:none;border:none;font-family:inherit;font-size:14px;
+    font-weight:700;color:var(--azul-600);padding:14px 16px 6px;
+    cursor:pointer;display:flex;align-items:center;gap:6px;
+  }
+  .btn-volver:active{opacity:.6}
+
+  /* ---------- TEXTOS ---------- */
+  .titulo-pantalla{
+    font-size:23px;font-weight:900;color:var(--azul-900);
+    margin:6px 16px 4px;letter-spacing:-.4px;line-height:1.2;
+  }
+  .subtitulo{font-size:14px;color:var(--g600);margin:0 16px 18px;line-height:1.45}
+  .nota{font-size:12px;color:var(--g400);text-align:center;margin:2px 16px 20px}
+
+  /* ---------- TARJETAS ---------- */
+  .tarjeta{
+    background:#fff;border-radius:var(--radio);padding:16px;
+    margin:0 16px 14px;border:1px solid var(--g200);
+    box-shadow:0 2px 10px rgba(11,31,58,.055);
+  }
+  .tarjeta h3{
+    font-size:15.5px;font-weight:800;color:var(--azul-900);
+    margin:0 0 10px;letter-spacing:-.1px;
+  }
+  .tarjeta p{font-size:14px;color:var(--g700);margin:0 0 8px}
+  .tarjeta p:last-child{margin-bottom:0}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:linear-gradient(160deg,#0b1f3a 0%,#1a4d8f 100%);
+    color:#fff;padding:30px 22px 34px;text-align:center;
+    border-radius:0 0 26px 26px;margin-bottom:16px;
+    position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 18% 22%, rgba(242,167,27,.20), transparent 42%),
+      radial-gradient(circle at 82% 78%, rgba(37,99,168,.55), transparent 50%);
+  }
+  .hero > *{position:relative;z-index:1}
+  .hero-icono{font-size:46px;line-height:1;margin-bottom:10px}
+  .hero h2{font-size:25px;margin:0 0 10px;font-weight:900;letter-spacing:-.5px}
+  .hero .lead{font-size:14.5px;color:#cfe1f5;margin:0;line-height:1.55}
+  .hero .lead strong{color:#f2a71b}
+
+  .lista-visiones{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+  .lista-visiones li{
+    display:flex;gap:11px;align-items:flex-start;font-size:13.5px;
+    color:var(--g700);padding:10px 12px;background:#f8fafd;
+    border-radius:12px;border-left:3px solid var(--g200);
+  }
+  .lista-visiones li span{font-size:18px;flex:0 0 auto;line-height:1.3}
+  .lista-visiones li.destacada{
+    background:var(--azul-100);border-left-color:var(--azul-600);
+    color:var(--azul-900);
+  }
+
+  /* ---------- SELECTOR DE SERVICIOS ---------- */
+  .grid-servicios{padding:0 16px}
+  .tarjeta-servicio{
+    display:flex;align-items:center;gap:14px;width:100%;
+    background:#fff;border:1px solid var(--g200);border-radius:var(--radio);
+    padding:16px;margin-bottom:12px;font-family:inherit;text-align:left;
+    cursor:pointer;box-shadow:0 2px 10px rgba(11,31,58,.06);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .2s;
+  }
+  .tarjeta-servicio:active{transform:scale(.98);border-color:var(--azul-500)}
+  .ts-emoji{font-size:30px;flex:0 0 auto;line-height:1}
+  .ts-info{flex:1;display:flex;flex-direction:column;gap:2px}
+  .ts-info strong{font-size:16px;color:var(--azul-900);font-weight:800}
+  .ts-info small{font-size:12.5px;color:var(--g600)}
+  .ts-flecha{font-size:26px;color:var(--g400);font-weight:300;line-height:1}
+
+  /* ---------- ENCABEZADO SERVICIO ---------- */
+  .encabezado-servicio{
+    display:flex;align-items:center;gap:13px;
+    margin:2px 16px 16px;padding:14px 16px;
+    background:linear-gradient(135deg,#0b1f3a,#1a4d8f);
+    border-radius:var(--radio);color:#fff;
+    box-shadow:0 6px 18px rgba(11,31,58,.22);
+  }
+  .sim-emoji{font-size:30px;line-height:1}
+  .encabezado-servicio h2{margin:0;font-size:18px;font-weight:900;letter-spacing:-.3px}
+  .encabezado-servicio p{margin:2px 0 0;font-size:12px;color:#9dc0e8;font-weight:600}
+
+  /* ---------- GRAFO ---------- */
+  .grafo-tarjeta{padding:8px 8px 4px;text-align:center}
+  #grafo{width:100%;max-width:300px;height:auto;display:block;margin:0 auto}
+  #grafo line,#grafo circle{transition:stroke-width .35s ease,stroke-opacity .35s ease,fill .35s ease}
+  .grafo-pie{font-size:11.5px;color:var(--g400);margin:2px 8px 10px!important;text-align:center}
+
+  /* ---------- DIMENSIONES ---------- */
+  .dim{
+    background:#fff;border-radius:var(--radio);padding:14px 16px 8px;
+    margin:0 16px 12px;border:1px solid var(--g200);
+    box-shadow:0 2px 10px rgba(11,31,58,.055);
+  }
+  .dim-cab{display:flex;align-items:center;gap:9px}
+  .dim-emoji{font-size:20px;line-height:1}
+  .dim-nombre{font-weight:800;font-size:14.5px;color:var(--azul-900);flex:1}
+  .dim-badge{
+    font-size:11px;font-weight:800;color:#fff;background:var(--azul-600);
+    border-radius:20px;padding:3px 10px;min-width:44px;text-align:center;
+  }
+  .dim-preg{font-size:12.5px;color:var(--g600);margin:5px 0 6px;line-height:1.4}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:44px;background:transparent;margin:0;display:block;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:10px;border-radius:6px;
+    background:linear-gradient(90deg,#2563a8,#7aa5d4,#f2a71b);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:30px;height:30px;border-radius:50%;background:#fff;
+    border:5px solid var(--azul-700);margin-top:-10px;
+    box-shadow:0 2px 8px rgba(11,31,58,.35);
+    transition:transform .12s ease;
+  }
+  input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+  input[type=range]::-moz-range-track{
+    height:10px;border-radius:6px;
+    background:linear-gradient(90deg,#2563a8,#7aa5d4,#f2a71b);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:22px;height:22px;border-radius:50%;background:#fff;
+    border:5px solid var(--azul-700);box-shadow:0 2px 8px rgba(11,31,58,.35);
+  }
+  .dim-extremos{
+    display:flex;justify-content:space-between;gap:10px;
+    font-size:10.5px;color:var(--g400);font-weight:600;
+    margin:-4px 0 8px;line-height:1.3;
+  }
+  .dim-extremos span:last-child{text-align:right}
+
+  /* ---------- PRESETS ---------- */
+  .fila-presets{
+    display:flex;gap:8px;padding:2px 16px 10px;
+    overflow-x:auto;scrollbar-width:none;
+  }
+  .fila-presets::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;font-family:inherit;font-size:12.5px;font-weight:700;
+    color:var(--azul-700);background:#fff;border:1.5px solid var(--g200);
+    border-radius:22px;padding:10px 15px;cursor:pointer;white-space:nowrap;
+    transition:all .15s ease;
+  }
+  .chip:active{transform:scale(.95);background:var(--azul-100);border-color:var(--azul-500)}
+
+  /* ---------- MÉTRICAS ---------- */
+  .metrica{margin-bottom:14px}
+  .metrica:last-child{margin-bottom:2px}
+  .metrica-cab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:8px}
+  .metrica-cab span:first-child{font-size:13px;font-weight:700;color:var(--g700)}
+  .metrica-cab span:last-child{font-size:13.5px;font-weight:900;font-variant-numeric:tabular-nums}
+  .barra{height:11px;border-radius:7px;background:var(--g100);overflow:hidden;border:1px solid #e2e9f2}
+  .barra i{
+    display:block;height:100%;border-radius:7px;width:0;
+    transition:width .5s cubic-bezier(.2,.8,.3,1), background .4s ease;
+  }
+
+  /* ---------- DOMINÓ ---------- */
+  .domino-disparador{
+    font-size:12.5px;color:var(--g600);margin:0 0 10px!important;
+    background:#f8fafd;border-radius:9px;padding:8px 11px;
+  }
+  .domino-disparador strong{color:var(--azul-700)}
+  .cadena{position:relative;padding-left:0}
+  .paso{display:flex;gap:11px;align-items:flex-start;padding:6px 0;position:relative}
+  .paso-num{
+    flex:0 0 26px;height:26px;border-radius:50%;
+    background:var(--azul-100);color:var(--azul-700);
+    font-size:12px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;z-index:1;
+  }
+  .paso:not(:last-child)::before{
+    content:"";position:absolute;left:12.5px;top:32px;bottom:-6px;
+    width:2px;background:#dbe6f2;border-radius:2px;
+  }
+  .paso-txt{font-size:13.5px;color:var(--g700);padding-top:3px;line-height:1.42}
+
+  /* ---------- ALERTAS ---------- */
+  .alerta{
+    display:flex;gap:10px;padding:12px 13px;border-radius:12px;
+    margin-bottom:10px;font-size:13px;line-height:1.45;
+  }
+  .alerta:last-child{margin-bottom:0}
+  .alerta .al-ico{font-size:17px;line-height:1.2;flex:0 0 auto}
+  .alerta strong{display:block;font-size:13.5px;margin-bottom:2px}
+  .alerta.alta{background:#fdecea;border-left:4px solid var(--bad);color:#7a1f18}
+  .alerta.alta strong{color:#9c2a20}
+  .alerta.media{background:#fff7e6;border-left:4px solid var(--warn);color:#7a5410}
+  .alerta.media strong{color:#8a5c0d}
+  .alerta.ok{background:#e8f7ef;border-left:4px solid var(--ok);color:#14532d}
+  .alerta.ok strong{color:#166534}
+
+  /* ---------- KIT ---------- */
+  .pregunta{
+    background:#fff;border-radius:var(--radio);padding:15px 16px;
+    margin:0 16px 14px;border:1px solid var(--g200);
+    box-shadow:0 2px 10px rgba(11,31,58,.055);
+  }
+  .pq-cab{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+  .pq-emoji{font-size:20px;line-height:1.2}
+  .pq-titulo{font-size:15px;font-weight:900;color:var(--azul-900);margin:0 0 3px}
+  .pq-texto{font-size:13px;color:var(--g600);margin:0;line-height:1.42}
+  .opcion{
+    display:block;width:100%;text-align:left;padding:12px 13px;
+    border-radius:12px;border:2px solid var(--g200);background:#fbfcfe;
+    font-family:inherit;font-size:13.5px;color:var(--g700);
+    margin-bottom:8px;cursor:pointer;line-height:1.4;
+    transition:all .15s ease;
+  }
+  .opcion:last-of-type{margin-bottom:0}
+  .opcion:active{transform:scale(.985)}
+  .opcion.sel{
+    border-color:var(--azul-600);background:var(--azul-100);
+    color:var(--azul-900);font-weight:700;
+  }
+  .feedback{
+    margin-top:10px;font-size:12.5px;color:var(--azul-700);
+    background:#f2f7fd;border-radius:10px;padding:10px 12px;
+    border-left:3px solid var(--azul-500);line-height:1.45;
+    animation:fade .25s ease;
+  }
+
+  /* ---------- INFORME ---------- */
+  .veredicto{
+    border-radius:var(--radio);padding:22px 18px;text-align:center;
+    color:#fff;margin:0 16px 14px;
+    box-shadow:0 8px 22px rgba(11,31,58,.22);
+  }
+  .veredicto .v-emoji{font-size:40px;line-height:1;margin-bottom:6px}
+  .veredicto .v-nivel{font-size:20px;font-weight:900;letter-spacing:-.3px;margin:0 0 4px}
+  .veredicto .v-pts{font-size:12.5px;opacity:.9;margin:0;font-weight:600}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .pill{
+    font-size:11.5px;font-weight:800;padding:7px 12px;border-radius:20px;
+    background:var(--g100);color:var(--g700);border:1px solid var(--g200);
+  }
+  .pill b{font-weight:900}
+  .rec{display:flex;gap:9px;font-size:13.3px;color:var(--g700);margin-bottom:9px;line-height:1.45}
+  .rec:last-child{margin-bottom:0}
+  .rec span{flex:0 0 auto;font-size:15px;line-height:1.3}
+  .resp-item{
+    font-size:13px;color:var(--g700);padding:11px 12px;border-radius:11px;
+    background:#f8fafd;margin-bottom:9px;line-height:1.45;border-left:3px solid var(--g200);
+  }
+  .resp-item:last-child{margin-bottom:0}
+  .resp-item b{color:var(--azul-900);display:block;margin-bottom:3px;font-size:13.5px}
+  .resp-item i{display:block;margin-top:5px;font-style:normal;color:var(--azul-700);font-size:12.5px}
+
+  .pie-app{
+    text-align:center;font-size:11px;color:var(--g400);
+    padding:18px 16px 26px;line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="logo">◈</div>
+    <div>
+      <h1>Arquitectos de Sistemas Digitales</h1>
+      <p>Análisis sociotécnico · Material N°14</p>
+    </div>
+  </header>
+
+  <!-- ============ PANTALLA 1: BIENVENIDA ============ -->
+  <section id="s-inicio" class="pantalla activa">
+    <div class="hero">
+      <div class="hero-icono">📱</div>
+      <h2>Más allá de la pantalla</h2>
+      <p class="lead">A primera vista es solo cristal y metal. Pero detrás hay un <strong>ecosistema invisible</strong>: máquinas, personas, normas y dinero que se construyen mutuamente.</p>
+    </div>
+
+    <div class="tarjeta">
+      <h3>🎯 Tu misión</h3>
+      <p>Vas a <strong>arquitectar</strong> un servicio digital real. Moverás sus cuatro dimensiones y verás, en tiempo real, cómo cada decisión dispara un <strong>efecto dominó</strong> sobre todo el sistema.</p>
+    </div>
+
+    <div class="tarjeta">
+      <h3>🔭 Tres formas de mirar la tecnología</h3>
+      <ul class="lista-visiones">
+        <li><span>🔨</span><div><strong>Visión instrumental:</strong> la tecnología como herramienta aislada, sin relación con los valores de la sociedad.</div></li>
+        <li><span>⚡</span><div><strong>Determinismo tecnológico:</strong> la idea de que la tecnología, por sí sola, genera todo el cambio social.</div></li>
+        <li class="destacada"><span>🔗</span><div><strong>Enfoque sociotécnico:</strong> tecnología y sociedad se <em>co-producen</em>. No existe una sin la otra.</div></li>
+      </ul>
+    </div>
+
+    <div class="tarjeta">
+      <h3>⚠️ Dato clave</h3>
+      <p>Un sistema sociotécnico tiene <strong>tres componentes inseparables</strong>: artefactos físicos, actores sociales y procesos tecnológicos. Si quitas uno solo, el sistema entero colapsa.</p>
+    </div>
+
+    <button class="btn btn-primario" onclick="ir('s-servicios')">Comenzar el análisis →</button>
+    <p class="nota">Sin registro · Todo se procesa en tu dispositivo</p>
+  </section>
+
+  <!-- ============ PANTALLA 2: SELECTOR ============ -->
+  <section id="s-servicios" class="pantalla">
+    <button class="btn-volver" onclick="ir('s-inicio')">← Volver al inicio</button>
+    <h2 class="titulo-pantalla">Elegí tu caso de estudio</h2>
+    <p class="subtitulo">Cada servicio es un sistema distinto, con sus propias tensiones entre máquinas, dinero, leyes y trabajo.</p>
+    <div id="lista-servicios" class="grid-servicios"></div>
+  </section>
+
+  <!-- ============ PANTALLA 3: SIMULADOR ============ -->
+  <section id="s-simulador" class="pantalla">
+    <button class="btn-volver" onclick="ir('s-servicios')">← Cambiar servicio</button>
+
+    <div class="encabezado-servicio">
+      <span class="sim-emoji" id="sim-emoji">🚗</span>
+      <div>
+        <h2 id="sim-nombre">App de Transporte</h2>
+        <p id="sim-sub">Tipo Uber / Cabify</p>
+      </div>
+    </div>
+
+    <div class="tarjeta grafo-tarjeta">
+      <svg viewBox="0 0 300 300" id="grafo" aria-hidden="true"></svg>
+      <p class="grafo-pie">Cada nodo es una dimensión del sistema. El grosor de la línea indica su peso actual.</p>
+    </div>
+
+    <div id="panel-dimensiones"></div>
+
+    <div class="fila-presets">
+      <button class="chip" data-preset="desregulado">⚡ Modelo desregulado</button>
+      <button class="chip" data-preset="equilibrado">⚖️ Modelo equilibrado</button>
+      <button class="chip" data-preset="corporativo">🏢 Modelo corporativo</button>
+    </div>
+
+    <div class="tarjeta">
+      <h3>📊 Estado del sistema</h3>
+      <div id="metricas"></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>🌀 Efecto dominó</h3>
+      <div id="domino"></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>🚨 Alertas del Kit Crítico</h3>
+      <div id="alertas"></div>
+    </div>
+
+    <button class="btn btn-primario" onclick="abrirKit()">Activar mi Kit de Reflexión Crítica →</button>
+  </section>
+
+  <!-- ============ PANTALLA 4: KIT ============ -->
+  <section id="s-kit" class="pantalla">
+    <button class="btn-volver" onclick="ir('s-simulador')">← Volver al simulador</button>
+    <h2 class="titulo-pantalla">Tu Kit de Reflexión Crítica</h2>
+    <p class="subtitulo">Cuatro preguntas para hacerte <strong>antes</strong> de adoptar cualquier tecnología.</p>
+    <div id="kit-preguntas"></div>
+    <button class="btn btn-primario" id="btn-informe" disabled onclick="generarInforme()">Generar mi informe →</button>
+  </section>
+
+  <!-- ============ PANTALLA 5: INFORME ============ -->
+  <section id="s-informe" class="pantalla">
+    <h2 class="titulo-pantalla">Informe del Arquitecto</h2>
+    <div id="informe-contenido"></div>
+    <button class="btn btn-secundario" onclick="reiniciar()">↻ Analizar otro servicio</button>
+    <p class="pie-app">Arquitectos de Sistemas Digitales · Basado en el Material N°14<br>Enfoque sociotécnico · Tecnología y sociedad se co-producen</p>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1. BASE DE DATOS DE SERVICIOS
+   Cada dimensión tiene: nombre, emoji, pregunta, extremos,
+   valor por defecto y una cadena de efectos dominó.
+   ========================================================= */
+
+const SERVICIOS = {
+
+  /* ---------------- APP DE TRANSPORTE ---------------- */
+  transporte: {
+    nombre: "App de Transporte",
+    sub: "Tipo Uber / Cabify",
+    emoji: "🚗",
+    dims: {
+      maquinas: {
+        nombre: "Máquinas y software",
+        emoji: "⚙️",
+        pregunta: "¿Cuánto decide el algoritmo de emparejamiento?",
+        min: "Decisiones humanas",
+        max: "Automatización total",
+        def: 62
+      },
+      economia: {
+        nombre: "Actores económicos",
+        emoji: "💰",
+        pregunta: "¿Cómo se reparte el dinero del viaje?",
+        min: "Reparto equitativo",
+        max: "Concentración en la plataforma",
+        def: 68
+      },
+      leyes: {
+        nombre: "Normas y leyes",
+        emoji: "⚖️",
+        pregunta: "¿Cuánta regulación laboral y de tránsito existe?",
+        min: "Desregulación total",
+        max: "Regulación estricta",
+        def: 32
+      },
+      trabajo: {
+        nombre: "Roles laborales",
+        emoji: "👷",
+        pregunta: "¿Qué protección social tienen los conductores?",
+        min: "Sin protección",
+        max: "Protección plena",
+        def: 28
+      }
+    },
+    cadenas: {
+      maquinas: {
+        alta: [
+          "El algoritmo asigna viajes y calcula tarifas dinámicas en tiempo real.",
+          "El conductor pierde control sobre su jornada y la previsibilidad de sus ingresos.",
+          "Aumenta el desgaste, la rotación y el costo de entrenar reemplazos.",
+          "La plataforma acumula datos y poder de negociación frente a quien conduce."
+        ],
+        baja: [
+          "Hay margen para decisiones humanas en la asignación de viajes.",
+          "El conductor puede aceptar, rechazar o negociar con criterio propio.",
+          "Mejora la calidad percibida y la relación con el pasajero.",
+          "La plataforma pierde eficiencia, escala y velocidad de expansión."
+        ]
+      },
+      economia: {
+        alta: [
+          "La plataforma eleva su comisión por viaje.",
+          "El ingreso neto del conductor se reduce sin que baje el precio al pasajero.",
+          "Hay que trabajar más horas para obtener el mismo dinero.",
+          "Crece el conflicto gremial y aparecen protestas y bloqueos."
+        ],
+        baja: [
+          "El reparto de ingresos favorece a quien efectivamente conduce.",
+          "Mejora el poder adquisitivo y la estabilidad del trabajador.",
+          "Baja la rotación y sube la calidad del servicio.",
+          "Cae la rentabilidad para inversores y accionistas."
+        ]
+      },
+      leyes: {
+        alta: [
+          "Entra en vigor una normativa laboral específica para plataformas.",
+          "La empresa debe reescribir su software, contratos y modelos de seguros.",
+          "Sube el costo operativo por viaje, pero se reparte el riesgo.",
+          "Mejora la estabilidad del ecosistema y la seguridad jurídica."
+        ],
+        baja: [
+          "No hay marco legal claro: la actividad vive en una zona gris.",
+          "Los conflictos se resuelven caso por caso en tribunales.",
+          "Crece la inseguridad jurídica para trabajadores, usuarios y empresa.",
+          "Aparecen prácticas desiguales y competencia desleal entre operadores."
+        ]
+      },
+      trabajo: {
+        alta: [
+          "Los conductores acceden a seguro, aportes y licencias.",
+          "Disminuye la urgencia de trabajar enfermo o sin descanso.",
+          "Mejora la seguridad vial y la calidad del servicio.",
+          "Sube el costo por viaje y se ajusta el modelo de negocio."
+        ],
+        baja: [
+          "Los conductores no tienen cobertura ni aportes jubilatorios.",
+          "Un accidente implica la pérdida total de los ingresos.",
+          "Aumenta la rotación constante: nadie permanece mucho tiempo.",
+          "La plataforma externaliza el riesgo hacia el trabajador y la sociedad."
+        ]
+      }
+    }
+  },
+
+  /* ---------------- RED SOCIAL ---------------- */
+  redsocial: {
+    nombre: "Red Social",
+    sub: "Feed algorítmico y publicidad",
+    emoji: "💬",
+    dims: {
+      maquinas: {
+        nombre: "Máquinas y software",
+        emoji: "⚙️",
+        pregunta: "¿Cuánta personalización algorítmica tiene el feed?",
+        min: "Orden cronológico",
+        max: "Predicción total de engagement",
+        def: 78
+      },
+      economia: {
+        nombre: "Actores económicos",
+        emoji: "💰",
+        pregunta: "¿De qué depende el modelo de negocio?",
+        min: "Suscripción / pago por uso",
+        max: "Publicidad y datos",
+        def: 82
+      },
+      leyes: {
+        nombre: "Normas y leyes",
+        emoji: "⚖️",
+        pregunta: "¿Cuánta regulación de privacidad y contenidos hay?",
+        min: "Sin regulación efectiva",
+        max: "Protección estricta de datos",
+        def: 30
+      },
+      trabajo: {
+        nombre: "Roles laborales",
+        emoji: "🛡️",
+        pregunta: "¿Cómo se realiza la moderación de contenidos?",
+        min: "Externalizada y precarizada",
+        max: "Equipos profesionales protegidos",
+        def: 26
+      }
+    },
+    cadenas: {
+      maquinas: {
+        alta: [
+          "El feed se ordena por predicción de engagement, no por tiempo.",
+          "El contenido emocional y polarizante gana alcance y visibilidad.",
+          "Se refuerzan las burbujas de información y la polarización.",
+          "Aumenta el tiempo de uso y, con él, la exposición publicitaria."
+        ],
+        baja: [
+          "El feed se ordena cronológicamente, sin predicción personalizada.",
+          "Menor tiempo de permanencia y menos datos recolectados.",
+          "Se diversifica lo que cada usuario ve y con quién se cruza.",
+          "Cae el inventario publicitario y el ingreso por usuario."
+        ]
+      },
+      economia: {
+        alta: [
+          "El negocio depende casi por completo de la publicidad segmentada.",
+          "Todo se optimiza para retener la atención el mayor tiempo posible.",
+          "Se intensifica la recolección de datos de comportamiento.",
+          "El usuario deja de ser cliente y pasa a ser el producto."
+        ],
+        baja: [
+          "Aparecen modelos de suscripción o pago por uso sin publicidad.",
+          "El incentivo deja de ser la atención infinita.",
+          "Mejora la relación con la comunidad y la confianza.",
+          "Se reduce el ingreso por usuario y hay que ajustar costos."
+        ]
+      },
+      leyes: {
+        alta: [
+          "Leyes de protección de datos con multas efectivas y exigibles.",
+          "La empresa debe pedir consentimiento explícito y granular.",
+          "Baja la precisión de la publicidad segmentada.",
+          "Sube el costo de cumplimiento normativo y de auditoría."
+        ],
+        baja: [
+          "No hay límites claros a la recolección y venta de datos.",
+          "Se rastrea al usuario incluso fuera de la plataforma.",
+          "Crece el riesgo de filtraciones y de usos indebidos.",
+          "Aumenta la desconfianza y la migración hacia otras apps."
+        ]
+      },
+      trabajo: {
+        alta: [
+          "La moderación se realiza con equipos profesionales y formados.",
+          "Hay apoyo psicológico, supervisión y condiciones dignas.",
+          "Mejora la calidad de la moderación y baja el contenido dañino.",
+          "Sube el costo operativo y se reduce el margen de ganancia."
+        ],
+        baja: [
+          "La moderación se externaliza a empresas de bajo costo.",
+          "Los moderadores revisan contenido dañino sin apoyo psicológico.",
+          "Aumenta el daño emocional, el ausentismo y la rotación.",
+          "Se degrada la calidad del ecosistema y crece el contenido nocivo."
+        ]
+      }
+    }
+  },
+
+  /* ---------------- APP DE DELIVERY ---------------- */
+  delivery: {
+    nombre: "App de Delivery",
+    sub: "Comida y reparto a domicilio",
+    emoji: "🛵",
+    dims: {
+      maquinas: {
+        nombre: "Máquinas y software",
+        emoji: "⚙️",
+        pregunta: "¿Qué tan estricta es la optimización de tiempos y rutas?",
+        min: "Tiempos negociados",
+        max: "Optimización al segundo",
+        def: 72
+      },
+      economia: {
+        nombre: "Actores económicos",
+        emoji: "💰",
+        pregunta: "¿Cómo se reparte el margen entre plataforma, restaurante y repartidor?",
+        min: "Reparto equilibrado",
+        max: "La plataforma captura todo",
+        def: 74
+      },
+      leyes: {
+        nombre: "Normas y leyes",
+        emoji: "⚖️",
+        pregunta: "¿Se exige seguro, registro y formalización?",
+        min: "Sin exigencias",
+        max: "Regulación estricta",
+        def: 28
+      },
+      trabajo: {
+        nombre: "Roles laborales",
+        emoji: "👷",
+        pregunta: "¿Qué estabilidad tienen los repartidores?",
+        min: "Trabajo por pedido, sin garantías",
+        max: "Contrato con aportes y horarios",
+        def: 24
+      }
+    },
+    cadenas: {
+      maquinas: {
+        alta: [
+          "El sistema calcula rutas y tiempos de entrega al segundo.",
+          "La paga se ajusta según la eficiencia medida por el algoritmo.",
+          "El repartidor compite contra el reloj, el tráfico y el semáforo.",
+          "Aumentan los accidentes de tránsito y las lesiones laborales."
+        ],
+        baja: [
+          "Los tiempos de entrega se negocian con margen humano.",
+          "El repartidor puede considerar el clima, el tráfico y su estado físico.",
+          "Bajan los accidentes y la presión sobre el cuerpo.",
+          "Aumentan los tiempos de entrega y baja la puntuación de la app."
+        ]
+      },
+      economia: {
+        alta: [
+          "La plataforma captura la mayor parte del margen por pedido.",
+          "Restaurantes y repartidores ajustan su ganancia hacia abajo.",
+          "Se comprime la calidad de los insumos y del servicio.",
+          "Crece la tensión entre los tres actores del sistema."
+        ],
+        baja: [
+          "El margen se reparte entre plataforma, restaurante y repartidor.",
+          "Restaurantes y repartidores sostienen su ingreso.",
+          "Mejora la calidad del servicio y la fidelidad del usuario.",
+          "Cae la rentabilidad de la plataforma y de sus inversores."
+        ]
+      },
+      leyes: {
+        alta: [
+          "Se exige seguro, registro y revisión técnica para repartir.",
+          "La plataforma debe formalizar la relación laboral.",
+          "Sube el costo por pedido, pero se reparte el riesgo.",
+          "Mejora la seguridad vial y la protección del trabajador."
+        ],
+        baja: [
+          "Se reparte sin seguro ni registro obligatorio.",
+          "Los accidentes quedan sin cobertura ni indemnización.",
+          "Aumenta la precariedad y el riesgo vial en la vía pública.",
+          "Se traslada el costo social a hospitales y al Estado."
+        ]
+      },
+      trabajo: {
+        alta: [
+          "Contratos con aportes, licencias y horarios definidos.",
+          "El repartidor puede planificar su vida y su descanso.",
+          "Baja la rotación y mejora la atención al cliente.",
+          "Sube el costo operativo y se ajusta el precio al usuario."
+        ],
+        baja: [
+          "Trabajo por pedido, sin ingresos garantizados ni obra social.",
+          "Disponibilidad permanente sin paga: se paga solo lo entregado.",
+          "Aumenta el agotamiento físico y la rotación constante.",
+          "La plataforma ajusta la oferta a la demanda sin costo fijo."
+        ]
+      }
+    }
+  }
+};
+
+/* =========================================================
+   2. KIT DE REFLEXIÓN CRÍTICA
+   ========================================================= */
+
+const KIT = [
+  {
+    id: "origen",
+    emoji: "🔍",
+    titulo: "1. El Origen",
+    pregunta: "¿Quién diseñó esta tecnología y con qué intereses ocultos o comerciales?",
+    opciones: [
+      { txt: "No lo sé, la uso sin preguntarme quién está detrás.", pts: 0,
+        fb: "Usar sin preguntar es delegar el diseño del sistema en otras personas." },
+      { txt: "Sé que hay una empresa detrás, pero no conozco su modelo de negocio.", pts: 1,
+        fb: "Conocer el modelo de negocio es el primer paso para entender el diseño." },
+      { txt: "Identifico a los actores y sus incentivos: comisiones, publicidad, datos.", pts: 2,
+        fb: "Excelente. Ves la tecnología como una decisión humana, no como un objeto neutral." }
+    ]
+  },
+  {
+    id: "impacto",
+    emoji: "🔐",
+    titulo: "2. El Impacto Personal",
+    pregunta: "¿Qué impacto tiene en tu privacidad, tus datos personales y tu tiempo?",
+    opciones: [
+      { txt: "No me preocupa, no tengo nada que esconder.", pts: 0,
+        fb: "La privacidad no se trata de esconder algo, sino de decidir quién usa tus datos y para qué." },
+      { txt: "Me incomoda, pero no cambio nada en la configuración.", pts: 1,
+        fb: "Reconocer el problema es el inicio; revisar permisos y tiempos es el siguiente paso." },
+      { txt: "Reviso permisos, datos que cedo y el tiempo que le dedico.", pts: 2,
+        fb: "Muy bien. La configuración es una decisión de diseño que también te pertenece." }
+    ]
+  },
+  {
+    id: "equidad",
+    emoji: "⚖️",
+    titulo: "3. La Equidad",
+    pregunta: "¿Quiénes se benefician directamente de este sistema y quiénes quedan excluidos?",
+    opciones: [
+      { txt: "Si alguien acepta el trabajo, es su decisión y ya está.", pts: 0,
+        fb: "La elección individual existe, pero está condicionada por las reglas del sistema." },
+      { txt: "Sé que hay desigualdad, pero no sé cómo medirla.", pts: 1,
+        fb: "Medirla es posible: mirá comisiones, seguros, ingresos netos y horas trabajadas." },
+      { txt: "Identifico quién gana, quién queda excluido y qué alternativas tiene.", pts: 2,
+        fb: "Ese mapeo es exactamente el análisis sociotécnico: revela dónde está el poder." }
+    ]
+  },
+  {
+    id: "costo",
+    emoji: "🌍",
+    titulo: "4. El Costo Real",
+    pregunta: "¿Cuál es el costo ambiental y social de mantener esta red funcionando?",
+    opciones: [
+      { txt: "No pienso en el costo ambiental ni en las condiciones laborales.", pts: 0,
+        fb: "La convergencia digital vuelve invisible la infraestructura, pero sigue existiendo." },
+      { txt: "Sé que hay un costo, pero es invisible para mí.", pts: 1,
+        fb: "Servidores, cables, antenas y baterías consumen energía y materiales finitos." },
+      { txt: "Considero energía, materiales y condiciones laborales de toda la red.", pts: 2,
+        fb: "Perfecto. Detrás de cada toque en la pantalla hay una cadena física y humana." }
+    ]
+  }
+];
+
+/* =========================================================
+   3. ESTADO GLOBAL
+   ========================================================= */
+
+const ORDEN = ["maquinas", "economia", "leyes", "trabajo"];
+
+const PRESETS = {
+  desregulado:  { maquinas: 80, economia: 88, leyes: 10, trabajo: 10 },
+  equilibrado:  { maquinas: 55, economia: 45, leyes: 78, trabajo: 82 },
+  corporativo:  { maquinas: 88, economia: 92, leyes: 45, trabajo: 32 }
+};
+
+const estado = {
+  servicio: null,
+  valores: {},
+  ultimoCambio: null,
+  respuestas: {}
+};
+
+/* =========================================================
+   4. NAVEGACIÓN
+   ========================================================= */
+
+function ir(id) {
+  document.querySelectorAll(".pantalla").forEach(function (p) {
+    p.classList.remove("activa");
+  });
+  var el = document.getElementById(id);
+  if (el) el.classList.add("activa");
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+/* =========================================================
+   5. SELECTOR DE SERVICIOS
+   ========================================================= */
+
+function renderServicios() {
+  var cont = document.getElementById("lista-servicios");
+  cont.innerHTML = "";
+  Object.keys(SERVICIOS).forEach(function (id) {
+    var s = SERVICIOS[id];
+    var b = document.createElement("button");
+    b.className = "tarjeta-servicio";
+    b.type = "button";
+    b.innerHTML =
+      '<span class="ts-emoji">' + s.emoji + "</span>" +
+      '<span class="ts-info"><strong>' + s.nombre + "</strong><small>" + s.sub + "</small></span>" +
+      '<span class="ts-flecha">›</span>';
+    b.addEventListener("click", function () { seleccionarServicio(id); });
+    cont.appendChild(b);
+  });
+}
+
+function seleccionarServicio(id) {
+  estado.servicio = id;
+  estado.respuestas = {};
+  estado.ultimoCambio = null;
+  estado.valores = {};
+
+  var s = SERVICIOS[id];
+  ORDEN.forEach(function (k) { estado.valores[k] = s.dims[k].def; });
+
+  document.getElementById("sim-emoji").textContent = s.emoji;
+  document.getElementById("sim-nombre").textContent = s.nombre;
+  document.getElementById("sim-sub").textContent = s.sub;
+
+  construirGrafo();
+  construirDimensiones();
+  actualizar();
+  ir("s-simulador");
+}
+
+/* =========================================================
+   6. GRAFO SVG
+   ========================================================= */
+
+var NODOS_GEO = [
+  { k: "maquinas", x: 150, y: 46 },
+  { k: "economia", x: 254, y: 150 },
+  { k: "trabajo",  x: 150, y: 254 },
+  { k: "leyes",    x: 46,  y: 150 }
+];
+
+var NS = "http://www.w3.org/2000/svg";
+
+function construirGrafo() {
+  var svg = document.getElementById("grafo");
+  svg.innerHTML = "";
+
+  NODOS_GEO.forEach(function (n) {
+    var l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", 150); l.setAttribute("y1", 150);
+    l.setAttribute("x2", n.x);  l.setAttribute("y2", n.y);
+    l.setAttribute("stroke", "#1a4d8f");
+    l.setAttribute("stroke-linecap", "round");
+    l.id = "linea-" + n.k;
+    svg.appendChild(l);
+  });
+
+  var c = document.createElementNS(NS, "circle");
+  c.setAttribute("cx", 150); c.setAttribute("cy", 150); c.setAttribute("r", 37);
+  c.setAttribute("fill", "#0b1f3a");
+  svg.appendChild(c);
+
+  var t = document.createElementNS(NS, "text");
+  t.setAttribute("x", 150); t.setAttribute("y", 150);
+  t.setAttribute("text-anchor", "middle");
+  t.setAttribute("dominant-baseline", "central");
+  t.setAttribute("font-size", "10.5");
+  t.setAttribute("font-weight", "800");
+  t.setAttribute("fill", "#ffffff");
+  t.setAttribute("letter-spacing", "0.5");
+  t.textContent = "SISTEMA";
+  svg.appendChild(t);
+
+  NODOS_GEO.forEach(function (n) {
+    var circ = document.createElementNS(NS, "circle");
+    circ.setAttribute("cx", n.x); circ.setAttribute("cy", n.y); circ.setAttribute("r", 28);
+    circ.setAttribute("fill", "#ffffff");
+    circ.setAttribute("stroke", "#1a4d8f");
+    circ.setAttribute("stroke-width", "2.5");
+    circ.id = "nodo-" + n.k;
+    svg.appendChild(circ);
+
+    var txt = document.createElementNS(NS, "text");
+    txt.setAttribute("x", n.x); txt.setAttribute("y", n.y + 1);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "central");
+    txt.setAttribute("font-size", "22");
+    txt.textContent = SERVICIOS[estado.servicio].dims[n.k].emoji;
+    svg.appendChild(txt);
+  });
+}
+
+function actualizarGrafo(v) {
+  ORDEN.forEach(function (k) {
+    var val = v[k];
+    var linea = document.getElementById("linea-" + k);
+    var nodo = document.getElementById("nodo-" + k);
+    if (linea) {
+      linea.setAttribute("stroke-width", (2 + val / 16).toFixed(1));
+      linea.setAttribute("stroke-opacity", (0.18 + val / 150).toFixed(2));
+    }
+    if (nodo) {
+      nodo.setAttribute("fill", "rgba(26,77,143," + (0.05 + val / 260).toFixed(3) + ")");
+    }
+  });
+}
+
+/* =========================================================
+   7. DIMENSIONES (SLIDERS)
+   ========================================================= */
+
+function construirDimensiones() {
+  var s = SERVICIOS[estado.servicio];
+  var cont = document.getElementById("panel-dimensiones");
+  cont.innerHTML = "";
+
+  ORDEN.forEach(function (k) {
+    var d = s.dims[k];
+    var div = document.createElement("div");
+    div.className = "dim";
+    div.innerHTML =
+      '<div class="dim-cab">' +
+        '<span class="dim-emoji">' + d.emoji + "</span>" +
+        '<span class="dim-nombre">' + d.nombre + "</span>" +
+        '<span class="dim-badge" id="badge-' + k + '">' + estado.valores[k] + "</span>" +
+      "</div>" +
+      '<p class="dim-preg">' + d.pregunta + "</p>" +
+      '<input type="range" min="0" max="100" step="1" value="' + estado.valores[k] +
+        '" id="range-' + k + '" aria-label="' + d.nombre + '">' +
+      '<div class="dim-extremos"><span>' + d.min + "</span><span>" + d.max + "</span></div>";
+
+    cont.appendChild(div);
+
+    var r = div.querySelector("input");
+    r.addEventListener("input", function (e) {
+      estado.valores[k] = parseInt(e.target.value, 10);
+      estado.ultimoCambio = k;
+      actualizar();
+    });
+  });
+}
+
+/* =========================================================
+   8. MÉTRICAS DEL SISTEMA
+   ========================================================= */
+
+function calcularMetricas(v) {
+  var poder  = 0.35 * v.maquinas + 0.35 * v.economia + 0.30 * (100 - v.leyes);
+  var precar = 0.25 * v.maquinas + 0.30 * v.economia +
+               0.20 * (100 - v.leyes) + 0.25 * (100 - v.trabajo);
+  var datos  = 0.35 * v.maquinas + 0.30 * v.economia + 0.35 * (100 - v.leyes);
+  var equil  = 100 - (0.40 * precar + 0.30 * datos + 0.30 * poder);
+
+  return {
+    poder: Math.round(poder),
+    precar: Math.round(precar),
+    datos: Math.round(datos),
+    equilibrio: Math.round(Math.max(0, Math.min(100, equil)))
+  };
+}
+
+function colorBarra(valor, invertido) {
+  var riesgo = invertido ? valor : (100 - valor);
+  if (riesgo >= 65) return "#d0453b";
+  if (riesgo >= 42) return "#e0a020";
+  return "#1f9d63";
+}
+
+function renderMetricas(m) {
+  var defs = [
+    { k: "poder",      nombre: "Poder de la plataforma",  inv: true  },
+    { k: "precar",     nombre: "Precariedad laboral",     inv: true  },
+    { k: "datos",      nombre: "Riesgo sobre tus datos",  inv: true  },
+    { k: "equilibrio", nombre: "Equilibrio sociotécnico", inv: false }
+  ];
+
+  var html = "";
+  defs.forEach(function (d) {
+    var val = m[d.k];
+    var col = colorBarra(val, d.inv);
+    html +=
+      '<div class="metrica">' +
+        '<div class="metrica-cab">' +
+          "<span>" + d.nombre + "</span>" +
+          '<span style="color:' + col + '">' + val + "</span>" +
+        "</div>" +
+        '<div class="barra"><i style="width:' + val + "%;background:" + col + '"></i></div>' +
+      "</div>";
+  });
+
+  document.getElementById("metricas").innerHTML = html;
+}
+
+/* =========================================================
+   9. EFECTO DOMINÓ
+   ========================================================= */
+
+function renderDomino() {
+  var s = SERVICIOS[estado.servicio];
+  var k = estado.ultimoCambio;
+
+  if (!k) {
+    var max = -1;
+    ORDEN.forEach(function (x) {
+      var d = Math.abs(estado.valores[x] - 50);
+      if (d > max) { max = d; k = x; }
+    });
+  }
+
+  var val = estado.valores[k];
+  var d = s.dims[k];
+  var cadena = s.cadenas[k][val > 50 ? "alta" : "baja"];
+
+  var html =
+    '<p class="domino-disparador">Disparador: <strong>' + d.nombre +
+    "</strong> al " + val + "% → " + (val > 50 ? d.max : d.min) + "</p>" +
+    '<div class="cadena">';
+
+  cadena.forEach(function (paso, i) {
+    html +=
+      '<div class="paso">' +
+        '<span class="paso-num">' + (i + 1) + "</span>" +
+        '<span class="paso-txt">' + paso + "</span>" +
+      "</div>";
+  });
+
+  html += "</div>";
+  document.getElementById("domino").innerHTML = html;
+}
+
+/* =========================================================
+   10. ALERTAS DEL KIT CRÍTICO
+   ========================================================= */
+
+function nivel(valor, alto, medio) {
+  if (valor >= alto) return "alta";
+  if (valor >= medio) return "media";
+  return "ok";
+}
+
+function renderAlertas(m) {
+  var alertas = [];
+
+  var nPoder  = nivel(m.poder, 68, 52);
+  var nDatos  = nivel(m.datos, 62, 46);
+  var nPrecar = nivel(m.precar, 62, 46);
+  var nEquil  = m.equilibrio <= 40 ? "alta" : (m.equilibrio <= 55 ? "media" : "ok");
+
+  if (nPoder !== "ok") {
+    alertas.push({
+      tipo: nPoder,
+      ico: "🔍",
+      titulo: "El Origen",
+      txt: nPoder === "alta"
+        ? "El poder está muy concentrado. Preguntate: ¿quién diseñó esta tecnología y con qué intereses comerciales?"
+        : "El poder empieza a concentrarse. Conviene identificar quién define las reglas del sistema."
+    });
+  }
+
+  if (nDatos !== "ok") {
+    alertas.push({
+      tipo: nDatos,
+      ico: "🔐",
+      titulo: "El Impacto Personal",
+      txt: nDatos === "alta"
+        ? "Tu privacidad está en juego. ¿Qué datos cedés, cuánto tiempo te consume y qué podés configurar?"
+        : "Hay recolección intensiva de datos. Revisá permisos y configuración de privacidad."
+    });
+  }
+
+  if (nPrecar !== "ok") {
+    alertas.push({
+      tipo: nPrecar,
+      ico: "⚖️",
+      titulo: "La Equidad",
+      txt: nPrecar === "alta"
+        ? "Hay trabajo precarizado sosteniendo el servicio. ¿Quiénes se benefician y quiénes quedan excluidos?"
+        : "Aparecen señales de precariedad. Mirá comisiones, seguros y horas trabajadas."
+    });
+  }
+
+  if (nEquil !== "ok") {
+    alertas.push({
+      tipo: nEquil,
+      ico: "🌍",
+      titulo: "El Costo Real",
+      txt: nEquil === "alta"
+        ? "El sistema está desbalanceado. ¿Cuál es el costo ambiental (energía, materiales) y social de mantener esta red funcionando?"
+        : "El equilibrio es frágil. Un cambio en un solo nodo puede alterar todo el sistema."
+    });
+  }
+
+  if (alertas.length === 0) {
+    alertas.push({
+      tipo: "ok",
+      ico: "✅",
+      titulo: "Sistema balanceado",
+      txt: "Ninguna dimensión está en zona crítica. Seguí monitoreando: los sistemas sociotécnicos cambian todo el tiempo."
+    });
+  }
+
+  var html = "";
+  alertas.forEach(function (a) {
+    html +=
+      '<div class="alerta ' + a.tipo + '">' +
+        '<span class="al-ico">' + a.ico + "</span>" +
+        "<div><strong>" + a.titulo + "</strong>" + a.txt + "</div>" +
+      "</div>";
+  });
+
+  document.getElementById("alertas").innerHTML = html;
+}
+
+/* =========================================================
+   11. ACTUALIZACIÓN GENERAL
+   ========================================================= */
+
+function actualizar() {
+  if (!estado.servicio) return;
+  var v = estado.valores;
+
+  ORDEN.forEach(function (k) {
+    var badge = document.getElementById("badge-" + k);
+    if (badge) badge.textContent = v[k];
+    var range = document.getElementById("range-" + k);
+    if (range && parseInt(range.value, 10) !== v[k]) range.value = v[k];
+  });
+
+  actualizarGrafo(v);
+  var m = calcularMetricas(v);
+  renderMetricas(m);
+  renderDomino();
+  renderAlertas(m);
+}
+
+/* =========================================================
+   12. PRESETS
+   ========================================================= */
+
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest("[data-preset]");
+  if (!btn || !estado.servicio) return;
+  var p = PRESETS[btn.getAttribute("data-preset")];
+  if (!p) return;
+  ORDEN.forEach(function (k) { estado.valores[k] = p[k]; });
+  estado.ultimoCambio = null;
+  actualizar();
+});
+
+/* =========================================================
+   13. KIT DE REFLEXIÓN CRÍTICA
+   ========================================================= */
+
+function abrirKit() {
+  if (!estado.servicio) return;
+  renderKit();
+  ir("s-kit");
+}
+
+function renderKit() {
+  var cont = document.getElementById("kit-preguntas");
+  cont.innerHTML = "";
+
+  KIT.forEach(function (q) {
+    var sel = estado.respuestas[q.id];
+    var html =
+      '<div class="pq-cab">' +
+        '<span class="pq-emoji">' + q.emoji + "</span>" +
+        "<div>" +
+          '<p class="pq-titulo">' + q.titulo + "</p>" +
+          '<p class="pq-texto">' + q.pregunta + "</p>" +
+        "</div>" +
+      "</div>";
+
+    q.opciones.forEach(function (op, i) {
+      html +=
+        '<button type="button" class="opcion' + (sel === i ? " sel" : "") +
+        '" data-q="' + q.id + '" data-i="' + i + '">' + op.txt + "</button>";
+    });
+
+    if (sel != null) {
+      html += '<div class="feedback">💡 ' + q.opciones[sel].fb + "</div>";
+    }
+
+    var div = document.createElement("div");
+    div.className = "pregunta";
+    div.innerHTML = html;
+    cont.appendChild(div);
+  });
+
+  var todas = KIT.every(function (q) { return estado.respuestas[q.id] != null; });
+  document.getElementById("btn-informe").disabled = !todas;
+}
+
+document.addEventListener("click", function (e) {
+  var op = e.target.closest(".opcion");
+  if (!op) return;
+  var qid = op.getAttribute("data-q");
+  var idx = parseInt(op.getAttribute("data-i"), 10);
+  estado.respuestas[qid] = idx;
+  renderKit();
+});
+
+/* =========================================================
+   14. INFORME FINAL
+   ========================================================= */
+
+function generarInforme() {
+  var s = SERVICIOS[estado.servicio];
+  var m = calcularMetricas(estado.valores);
+
+  var pts = 0;
+  KIT.forEach(function (q) {
+    var r = estado.respuestas[q.id];
+    if (r != null) pts += q.opciones[r].pts;
+  });
+
+  var maxPts = KIT.length * 2;
+  var pct = Math.round((pts / maxPts) * 100);
+
+  var nivelTxt, color, emoji, descripcion;
+  if (pct >= 75) {
+    nivelTxt = "Arquitecto/a sociotécnico/a";
+    color = "linear-gradient(135deg,#1f9d63,#146c43)";
+    emoji = "🏛️";
+    descripcion = "Leés la tecnología como un sistema de decisiones humanas. Podés identificar intereses, medir impactos y exigir rendición de cuentas.";
+  } else if (pct >= 40) {
+    nivelTxt = "Usuario/a consciente";
+    color = "linear-gradient(135deg,#e0a020,#b8791a)";
+    emoji = "🧭";
+    descripcion = "Reconocés que hay un sistema detrás de la pantalla, pero todavía podés profundizar en cómo se reparte el poder y el costo real.";
+  } else {
+    nivelTxt = "Espectador/a del sistema";
+    color = "linear-gradient(135deg,#d0453b,#96291f)";
+    emoji = "👀";
+    descripcion = "Estás mirando la pantalla, no el sistema. Empezá por preguntar quién diseña, quién gana y quién sostiene el servicio.";
+  }
+
+  var veredicto =
+    '<div class="veredicto" style="background:' + color + '">' +
+      '<div class="v-emoji">' + emoji + "</div>" +
+      '<p class="v-nivel">' + nivelTxt + "</p>" +
+      '<p class="v-pts">' + pts + " / " + maxPts + " puntos de conciencia crítica · " + pct + "%</p>" +
+    "</div>";
+
+  var resumen =
+    '<div class="tarjeta">' +
+      "<h3>🧩 El sistema que construiste</h3>" +
+      "<p>Servicio analizado: <strong>" + s.emoji + " " + s.nombre + "</strong></p>" +
+      '<div class="pills">' +
+        '<span class="pill">Poder de la plataforma: <b>' + m.poder + "</b></span>" +
+        '<span class="pill">Precariedad laboral: <b>' + m.precar + "</b></span>" +
+        '<span class="pill">Riesgo de datos: <b>' + m.datos + "</b></span>" +
+        '<span class="pill">Equilibrio: <b>' + m.equilibrio + "</b></span>" +
+      "</div>" +
+    "</div>";
+
+  var recomendaciones = [];
+  if (m.poder >= 60) recomendaciones.push(["🏢", "Diversificá: cuando una sola plataforma concentra el poder, las reglas las escribe ella."]);
+  if (m.precar >= 55) recomendaciones.push(["👷", "Exigí pisos mínimos: seguro, aportes y transparencia en las comisiones no son un lujo, son infraestructura social."]);
+  if (m.datos >= 55) recomendaciones.push(["🔐", "Configurá y reclamá: la privacidad se defiende con ajustes, leyes y presión colectiva."]);
+  if (m.equilibrio <= 55) recomendaciones.push(["🌍", "Mirá la infraestructura: servidores, cables y baterías también tienen costo ambiental y humano."]);
+  recomendaciones.push(["🗺️", "Mapeá siempre las cuatro dimensiones antes de adoptar una tecnología: máquinas, dinero, normas y trabajo."]);
+
+  var recHtml =
+    '<div class="tarjeta"><h3>🧭 Recomendaciones</h3>' +
+    recomendaciones.map(function (r) {
+      return '<div class="rec"><span>' + r[0] + "</span><div>" + r[1] + "</div></div>";
+    }).join("") +
+    "</div>";
+
+  var respHtml =
+    '<div class="tarjeta"><h3>📝 Tus respuestas</h3>' +
+    KIT.map(function (q) {
+      var r = estado.respuestas[q.id];
+      if (r == null) return "";
+      return '<div class="resp-item"><b>' + q.emoji + " " + q.titulo + "</b>" +
+             q.opciones[r].txt +
+             "<i>💡 " + q.opciones[r].fb + "</i></div>";
+    }).join("") +
+    "</div>";
+
+  var desc =
+    '<div class="tarjeta"><h3>🎓 Tu perfil crítico</h3><p>' + descripcion + "</p></div>";
+
+  document.getElementById("informe-contenido").innerHTML =
+    veredicto + resumen + desc + recHtml + respHtml;
+
+  ir("s-informe");
+}
+
+/* =========================================================
+   15. REINICIO
+   ========================================================= */
+
+function reiniciar() {
+  estado.servicio = null;
+  estado.valores = {};
+  estado.ultimoCambio = null;
+  estado.respuestas = {};
+  ir("s-servicios");
+}
+
+/* =========================================================
+   16. INICIALIZACIÓN
+   ========================================================= */
+
+renderServicios();
+</script>
+</body>
+</html>
